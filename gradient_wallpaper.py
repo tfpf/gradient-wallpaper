@@ -27,7 +27,7 @@ def get_smooth_colour(height, length, r, g, b):
 	# initialising values for the loop
 	row_start = 0 # the colour of the first pixel in a row
 	row_step = 1.0 / (height - 1) # the amount by which 'row_start' will change on advancing one row
-	print 'generating a mask'
+	print('generating a mask')
 
 	# filling the matrix with smoothly varying values
 	for x in range(height):
@@ -35,7 +35,7 @@ def get_smooth_colour(height, length, r, g, b):
 		# initialising values for nested loop
 		shade = row_start # the colour of [x, y] pixel
 		column_step = (1.0 - row_start) / (length - 1) # the amount by which 'shade' will change on advancing one column
-		print 'generating row %d of %d\r' % (x + 1, height),
+		print('generating row %d of %d\r' % (x + 1, height),)
 		sys.stdout.flush()
 
 		# actually writing values to the matrix happens here
@@ -46,7 +46,7 @@ def get_smooth_colour(height, length, r, g, b):
 			shade += column_step
 		row_start += row_step
 
-	print '\nDone!'
+	print('\nDone!')
 	# this is the actual image, because matplotlib requires RGB
 	img = np.zeros([height, length, 3])
 
@@ -76,8 +76,8 @@ if __name__ == '__main__':
 		g = abs(float(sys.argv[4]))
 		b = abs(float(sys.argv[5]))
 	except IndexError:
-		print 'usage:'
-		print '\t./smooth_gradient.py <height> <length> <red> <green> <blue>'
+		print('usage:')
+		print('\t./smooth_gradient.py <height> <length> <red> <green> <blue>')
 		raise SystemExit
 
 	mask = get_smooth_colour(height, length, r, g, b)
