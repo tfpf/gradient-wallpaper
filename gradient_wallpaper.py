@@ -1,84 +1,55 @@
-#!/usr/bin/env python
+#! /usr/bin/python3 -B
 
 import sys
-import matplotlib.pyplot as pp
+import matplotlib.pyplot as plt
 import numpy as np
 
-# function to give a smoothly changing image
-def get_smooth_colour(height, length, r, g, b):
+###############################################################################
 
-	# check 'r', 'g' and 'b'
-	# these are the weights which will be used to get the final colour image
-	if r < 0 or r > 1:
-		raise ValueError('Invalid value for \'r\' argument.')
-	if g < 0 or g > 1:
-		raise ValueError('Invalid value for \'g\' argument.')
-	if b < 0 or b > 1:
-		raise ValueError('Invalid value for \'b\' argument.')
+def show_help():
+    message = f'''\
+Usage:
+  python3 {sys.argv[0]} <h> <w> <r> <g> <b>
+where <h> and <w> are the height and width of the image in pixels, and <r>, <g>
+and <b> are integers in the range [0, 255], representing the intensities of the
+red, green and blue components at the top left of the image.\
+'''
+    raise SystemExit(message)
 
-	'''
-		The size of the image is given as (length, height)
-		but a matrix is represented as (height, length)
-		because 'height' is actually the number of rows and
-		'length' is the number of columns.
-	'''
-	intensity_map = np.zeros([height, length])
+###############################################################################
 
-	# initialising values for the loop
-	row_start = 0 # the colour of the first pixel in a row
-	row_step = 1.0 / (height - 1) # the amount by which 'row_start' will change on advancing one row
-	print('generating a mask')
+def main():
+    try:
+        (height, width, red, green, blue) = map(int, sys.argv[1 :])
+    except ValueError:
+        show_help()
+    if height <= 0 or width <= 0 or not all(0 <= arg <= 255 for arg in (red, green, blue)):
+        show_help()
 
-	# filling the matrix with smoothly varying values
-	for x in range(height):
+    # Create a mask which fades from white at the top left to black at the top
+    # right, bottom right and bottom left.
+    (rows, cols) = (height, width)
+    layer = np.zeros((0, cols))
+    for start in np.linspace(1, 0, rows):
+        layer = np.vstack((layer, np.linspace(start, 0, cols)))
 
-		# initialising values for nested loop
-		shade = row_start # the colour of [x, y] pixel
-		column_step = (1.0 - row_start) / (length - 1) # the amount by which 'shade' will change on advancing one column
-		print('generating row %d of %d\r' % (x + 1, height),)
-		sys.stdout.flush()
+    # Create a three-channel image from the mask.
+    img = np.dstack((layer * red / 255, layer * green / 255, layer * blue / 255))
+    plt.imshow(img)
+    plt.show()
 
-		# actually writing values to the matrix happens here
-		for y in range(length):
+    message = '''\
+Enter the name of the file to write the image to. Alternatively, press Enter
+without typing anything to abort.
+> \
+'''
+    response = input(message)
+    if not response or response.isspace():
+        print('Aborted.')
+        return
+    plt.imsave(response, img)
 
-			# set pixel value and set up next loop iteration
-			intensity_map[x, y] = 1 - shade
-			shade += column_step
-		row_start += row_step
+###############################################################################
 
-	print('\nDone!')
-	# this is the actual image, because matplotlib requires RGB
-	img = np.zeros([height, length, 3])
-
-	# depending on last three arguments, choose how the RGB channels are filled
-	img[:, :, 0] = r * intensity_map
-	img[:, :, 1] = g * intensity_map
-	img[:, :, 2] = b * intensity_map
-
-	'''
-		Limitations of floating point representation cause errors
-		in the above calculations. Some values may be slightly less
-		than 0, and others, greater than 1. (I have seen values
-		which were 1e-16 outside the bounds.) Hence, this is
-		required.
-	'''
-	img = np.clip(img, 0, 1)
-	return img
-
-# main
 if __name__ == '__main__':
-
-	# set image dimensions
-	try:
-		height = abs(int(sys.argv[1]))
-		length = abs(int(sys.argv[2]))
-		r = abs(float(sys.argv[3]))
-		g = abs(float(sys.argv[4]))
-		b = abs(float(sys.argv[5]))
-	except IndexError:
-		print('usage:')
-		print('\t./smooth_gradient.py <height> <length> <red> <green> <blue>')
-		raise SystemExit
-
-	mask = get_smooth_colour(height, length, r, g, b)
-	pp.imsave('desktop_background.png', mask)
+    main()
